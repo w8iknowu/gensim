@@ -1201,11 +1201,15 @@ class FastTextKeyedVectors(KeyedVectors):
             return
 
         self.vectors = self.vectors_vocab[:].copy()
-        for i, _ in enumerate(self.index_to_key):
-            ngram_buckets = self.buckets_word[i]
-            for nh in ngram_buckets:
-                self.vectors[i] += self.vectors_ngrams[nh]
-            self.vectors[i] /= len(ngram_buckets) + 1
+        # original
+        # for i, _ in enumerate(self.index_to_key):
+        #     ngram_buckets = self.buckets_word[i]
+        #     for nh in ngram_buckets:
+        #         self.vectors[i] += self.vectors_ngrams[nh]
+        #     self.vectors[i] /= len(ngram_buckets) + 1
+        # try optimization with more vectorized operation.
+        for i, bw in enumerate(self.buckets_word[:len(self.index_to_key)]):
+            self.vectors[i] = (self.vectors[i] + self.vectors_ngrams[bw].sum(axis=0)) / (len(bw) + 1)
 
     def recalc_char_ngram_buckets(self):
         """
